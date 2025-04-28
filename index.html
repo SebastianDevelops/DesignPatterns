@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Patterns</title>
+    <!-- Using reliable CDN for Anime.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+            line-height: 1.5;
+        }
+
+        .controls {
+            margin-bottom: 15px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-around;
+            width: 95%;
+            max-width: 1200px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
+        }
+
+        #animation-area {
+            width: 50%;
+            height: 500px;
+            border: 1px solid #ccc;
+            position: relative;
+            background-color: #e9f5ff;
+            overflow: hidden; /* Keep elements contained */
+        }
+
+        #info-area {
+            width: 45%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .visual-element {
+            position: absolute;
+            border: 2px solid black;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 12px;
+            background-color: white;
+            opacity: 1; /* Start visible */
+            transition: box-shadow 0.3s ease, background-color 0.3s ease; /* Smooth highlighting */
+            box-sizing: border-box; /* Include padding/border in width */
+        }
+
+        .client { background-color: #ffe8cc; border-color: #ffa500; }
+        .creator { background-color: #e6e6fa; border-color: #9370db; border-style: dashed; } /* Abstract */
+        .concrete-creator { background-color: #d8f8d8; border-color: #3cb371; }
+        .product-interface { background-color: #fffacd; border-color: #ffd700; border-style: dashed; } /* Interface */
+        .concrete-product { background-color: #add8e6; border-color: #4682b4; }
+
+        .request-object {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #ff4500; /* Orange-red */
+            border-radius: 50%;
+            opacity: 0; /* Start hidden */
+            z-index: 10;
+            box-shadow: 0 0 5px rgba(255, 69, 0, 0.7);
+        }
+        .product-object {
+             position: absolute;
+             width: 25px;
+             height: 25px;
+             border-radius: 3px;
+             opacity: 0; /* Start hidden */
+             z-index: 10;
+             text-align: center;
+             line-height: 25px;
+             font-size: 10px;
+             font-weight: bold;
+             color: white;
+             box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+         .car-instance { background-color: #4682b4; /* Blue */ }
+         .truck-instance { background-color: #8b4513; /* Brown */ }
+
+
+        /* Positioning */
+        #client { top: 20px; left: 20px; width: 80px;}
+        #vehicle-factory { top: 150px; left: 150px; width: 120px; }
+        #car-factory { top: 250px; left: 50px; width: 100px;}
+        #truck-factory { top: 250px; left: 200px; width: 100px; }
+        #ivehicle { top: 150px; right: 50px; width: 100px;}
+        #car-product { top: 250px; right: 150px; width: 80px;}
+        #truck-product { top: 250px; right: 30px; width: 80px;}
+
+        #explanation, #code-snippet {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+            min-height: 150px;
+            overflow-y: auto;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        #code-snippet pre {
+            margin: 0;
+            font-size: 0.9em;
+            white-space: pre-wrap; /* Allow wrapping */
+            word-wrap: break-word; /* Break long lines */
+        }
+         #code-snippet code {
+             display: block; /* Ensure code block takes full width */
+             font-family: 'Courier New', Courier, monospace;
+             color: #333;
+         }
+
+        .code-highlight {
+            background-color: #fff0b3; /* Yellow highlight */
+            display: inline-block; /* Highlight only the text */
+            padding: 0 2px;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+        .code-line { /* Subtle styling for code explanation lines */
+             color: #555;
+             font-style: italic;
+             display: block;
+             margin-bottom: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 0 10px; /* Spacing between buttons */
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            min-width: 120px; /* Ensure buttons have similar width */
+            transition: background-color 0.2s ease;
+        }
+        button:hover:not(:disabled) {
+             background-color: #0056b3;
+        }
+         button:disabled {
+             background-color: #aaa;
+             cursor: not-allowed;
+         }
+
+        h1 { margin-bottom: 10px; }
+        h2, h3 { margin-top: 0; }
+        h3 { margin-bottom: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Factory Method Pattern - Step-by-Step</h1>
+
+    <div class="controls">
+        <button id="start-button">Start</button>
+        <button id="next-button" style="display: none;">Next Step</button>
+    </div>
+
+    <div class="container">
+        <div id="animation-area">
+            <!-- Visual Elements -->
+            <div id="client" class="visual-element client">Client</div>
+            <div id="vehicle-factory" class="visual-element creator">VehicleFactory<br/>(Abstract Creator)<br/><i>CreateVehicle()</i></div>
+            <div id="car-factory" class="visual-element concrete-creator">CarFactory<br/>(Concrete Creator)</div>
+            <div id="truck-factory" class="visual-element concrete-creator">TruckFactory<br/>(Concrete Creator)</div>
+            <div id="ivehicle" class="visual-element product-interface">IVehicle<br/>(Product Interface)</div>
+            <div id="car-product" class="visual-element concrete-product">Car<br/>(Concrete Product)</div>
+            <div id="truck-product" class="visual-element concrete-product">Truck<br/>(Concrete Product)</div>
+
+             <!-- Animated Objects -->
+            <div id="request" class="request-object"></div>
+            <div id="created-product" class="product-object">?</div>
+        </div>
+
+        <div id="info-area">
+            <h3>Explanation</h3>
+            <div id="explanation">
+                Welcome! This animation demonstrates the Factory Method pattern step-by-step.
+                <br/><br/>
+                <b>Goal:</b> Define an interface for creating an object, but let subclasses decide which class to instantiate. Factory Method lets a class defer instantiation to subclasses.
+                <br/><br/>
+                Click "Start" to begin the first step. Use "Next Step" to proceed.
+            </div>
+
+            <h3>C# Code Snippet</h3>
+            <div id="code-snippet">
+                <pre><code id="code-content">// C# Code will appear here as the animation progresses.</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Element References ---
+        const clientEl = document.getElementById('client');
+        const vehicleFactoryEl = document.getElementById('vehicle-factory');
+        const carFactoryEl = document.getElementById('car-factory');
+        const truckFactoryEl = document.getElementById('truck-factory');
+        const ivehicleEl = document.getElementById('ivehicle');
+        const carProductEl = document.getElementById('car-product');
+        const truckProductEl = document.getElementById('truck-product');
+        const requestEl = document.getElementById('request');
+        const createdProductEl = document.getElementById('created-product');
+
+        const explanationEl = document.getElementById('explanation');
+        const codeContentEl = document.getElementById('code-content');
+        const startButton = document.getElementById('start-button');
+        const nextButton = document.getElementById('next-button');
+
+        // --- Global State ---
+        let tl = null; // Anime.js Timeline instance for animated steps
+        let currentStep = 0; // Tracks the current step number
+
+        // --- C# Code Snippets (Remain the same as previous version) ---
+        const codeSnippets = {
+             initial: `
+// Click 'Start' to define the Product and Creator interfaces/classes.
+             `,
+             step1_productInterface: `
+<span class="code-line">// 1. Define the Product Interface & Concrete Products
+// The Product defines the interface for objects the factory method creates.
+// Concrete Products provide various implementations of the Product interface.</span>
+public interface IVehicle
+{
+    void Drive();
+}
+
+public class Car : IVehicle
+{
+    public void Drive() { Console.WriteLine("Driving a Car!"); }
+}
+
+public class Truck : IVehicle
+{
+    public void Drive() { Console.WriteLine("Driving a Truck!"); }
+}
+             `,
+             step2_creatorClass: `
+<span class="code-line">// 2. Define the Creator (Abstract Factory)
+// Declares the factory method ('CreateVehicle'), which returns an object of type IVehicle.
+// May also contain core business logic ('DeliverVehicle') using the product.</span>
+public abstract class VehicleFactory
+{
+    // The "Factory Method" - must be implemented by subclasses
+    <span class="code-highlight">public abstract IVehicle CreateVehicle();</span>
+
+    // An operation that uses the factory method
+    public void DeliverVehicle()
+    {
+        IVehicle vehicle = CreateVehicle(); // Call the factory method
+        Console.WriteLine("Created a vehicle via factory, now delivering...");
+        vehicle.Drive();
+    }
+}
+             `,
+              step3_concreteCreators: `
+<span class="code-line">// 3. Define Concrete Creators
+// These classes override the factory method to return an instance
+// of a specific Concrete Product. The core logic ('DeliverVehicle') is inherited.</span>
+public class CarFactory : VehicleFactory
+{
+    <span class="code-highlight">public override IVehicle CreateVehicle()</span>
+    {
+        // Specific implementation returns a Car
+        return new Car();
+    }
+}
+
+public class TruckFactory : VehicleFactory
+{
+    <span class="code-highlight">public override IVehicle CreateVehicle()</span>
+    {
+        // Specific implementation returns a Truck
+        return new Truck();
+    }
+}
+             `,
+             step4_clientCodeCarSetup: `
+<span class="code-line">// 4. Client Code: Choosing the Car Factory
+// The client wants a Car. It creates a CarFactory instance, but often
+// works with it through the abstract VehicleFactory interface.</span>
+public class Client
+{
+    public void Main_CarExample()
+    {
+        Console.WriteLine("Client: Need a Car.");
+        // Client chooses the specific factory
+        <span class="code-highlight">VehicleFactory factory = new CarFactory();</span>
+
+        // More logic will follow...
+    }
+}
+             `,
+             step5_clientCodeCarCall: `
+<span class="code-line">// 5. Client Code: Calling the Operation (Car)
+// The client calls an operation on the factory (e.g., DeliverVehicle).
+// It doesn't directly call CreateVehicle or instantiate the Car.</span>
+public class Client
+{
+    public void Main_CarExample()
+    {
+        Console.WriteLine("Client: Need a Car.");
+        VehicleFactory factory = new CarFactory();
+
+        // The factory's method uses the overridden CreateVehicle internally.
+        <span class="code-highlight">factory.DeliverVehicle();</span>
+        // This internally calls CarFactory's CreateVehicle() -> new Car() -> car.Drive()
+    }
+}
+
+// --- Output for CarFactory ---
+// Client: Need a Car.
+// Created a vehicle via factory, now delivering...
+// Driving a Car!
+             `,
+             step6_factoryCreatesCar: `
+<span class="code-line">// 6. Concrete Factory Creates Product (Car)
+// The CarFactory's overridden CreateVehicle method executes,
+// returning a new Car instance.</span>
+public class CarFactory : VehicleFactory
+{
+    public override IVehicle CreateVehicle()
+    {
+        <span class="code-highlight">return new Car();</span> // This line is executed
+    }
+}
+             `,
+             step7_productReturnedCar: `
+<span class="code-line">// 7. Product Returned (Car)
+// The created Car object (typed as IVehicle) is returned from CreateVehicle,
+// used within DeliverVehicle (e.g., vehicle.Drive()), and the operation completes.
+// The client received the product without knowing the creation specifics.</span>
+public abstract class VehicleFactory
+{
+    // ... CreateVehicle() ...
+    public void DeliverVehicle()
+    {
+        <span class="code-highlight">IVehicle vehicle = CreateVehicle();</span> // Car instance received here
+        Console.WriteLine("Created a vehicle via factory, now delivering...");
+        <span class="code-highlight">vehicle.Drive();</span> // Car's Drive method called
+    }
+}
+             `,
+             step8_clientCodeTruckSetup: `
+<span class="code-line">// 8. Client Code: Choosing the Truck Factory
+// Later, the client needs a Truck. It uses the *same* core logic
+// but instantiates a different factory (TruckFactory).</span>
+public class Client
+{
+    public void Main_TruckExample()
+    {
+        Console.WriteLine("\\nClient: Now I need a Truck.");
+        // Client chooses a different factory
+        <span class="code-highlight">VehicleFactory factory = new TruckFactory();</span>
+
+        // The rest of the client code interacting with the factory can remain the same.
+    }
+}
+             `,
+             step9_clientCodeTruckCall: `
+<span class="code-line">// 9. Client Code: Calling the Operation (Truck)
+// The client makes the *same* call (DeliverVehicle) on the new factory instance.</span>
+public class Client
+{
+     public void Main_TruckExample()
+    {
+        Console.WriteLine("\\nClient: Now I need a Truck.");
+        VehicleFactory factory = new TruckFactory();
+
+        // The factory's method now uses TruckFactory's CreateVehicle internally.
+        <span class="code-highlight">factory.DeliverVehicle();</span>
+        // This internally calls TruckFactory's CreateVehicle() -> new Truck() -> truck.Drive()
+    }
+}
+
+// --- Output for TruckFactory ---
+// Client: Now I need a Truck.
+// Created a vehicle via factory, now delivering...
+// Driving a Truck!
+             `,
+              step10_factoryCreatesTruck: `
+<span class="code-line">// 10. Concrete Factory Creates Product (Truck)
+// The TruckFactory's overridden CreateVehicle method executes,
+// returning a new Truck instance.</span>
+public class TruckFactory : VehicleFactory
+{
+    public override IVehicle CreateVehicle()
+    {
+        <span class="code-highlight">return new Truck();</span> // This line is executed
+    }
+}
+             `,
+             step11_productReturnedTruck: `
+<span class="code-line">// 11. Product Returned (Truck)
+// The created Truck object (as IVehicle) is returned.
+// The client used the same calling method but received a different product
+// because it used a different factory. This shows the pattern's flexibility.</span>
+public abstract class VehicleFactory
+{
+    // ... CreateVehicle() ...
+    public void DeliverVehicle()
+    {
+        <span class="code-highlight">IVehicle vehicle = CreateVehicle();</span> // Truck instance received here
+        Console.WriteLine("Created a vehicle via factory, now delivering...");
+        <span class="code-highlight">vehicle.Drive();</span> // Truck's Drive method called
+    }
+}
+             `,
+              summary: `
+<span class="code-line">// --- Summary ---
+// The Factory Method pattern decouples the client from concrete product creation.
+// - Client interacts with the abstract Creator and Product interfaces.
+// - Concrete Creators implement the factory method to produce specific Products.
+// - Easily add new products and creators without changing the client code
+//   (as long as the client uses the abstract interfaces).</span>
+
+// Benefits:
+// - Adheres to Open/Closed Principle.
+// - Adheres to Single Responsibility Principle (moves creation logic).
+// - Reduces coupling between client and concrete products.
+
+// Demo finished. Click 'Restart' to view again.
+             `
+        };
+
+        // --- Utility Functions ---
+        function updateExplanation(htmlContent) {
+            explanationEl.innerHTML = htmlContent;
+        }
+
+        function updateCode(codeKey) {
+            codeContentEl.innerHTML = codeSnippets[codeKey] || '';
+        }
+
+        function highlightElement(el, highlight = true) {
+             if (el) {
+                 el.style.boxShadow = highlight ? '0 0 8px 3px #f0e68c' : 'none'; // Khaki glow
+             }
+         }
+
+         function resetHighlights() {
+             document.querySelectorAll('.visual-element').forEach(el => {
+                  el.style.boxShadow = 'none';
+             });
+         }
+
+        // --- Animation Control ---
+        function pauseAnimation() {
+            // Called by the timeline when an animated step completes and needs a pause
+            if (tl) tl.pause();
+            startButton.disabled = true; // Keep start disabled during sequence
+            nextButton.style.display = 'inline-block';
+            nextButton.disabled = false; // Enable next button for user input
+        }
+
+        function handleAnimationEnd() {
+             // Called when the entire ANIMATED timeline finishes
+             updateExplanation(`<b>End of Demo</b><br/>The Factory Method allows the Client to get different Product types (Car, Truck) using the same creation logic defined in the abstract Creator (VehicleFactory), just by changing the Concrete Creator (CarFactory, TruckFactory) it uses. This decouples the Client from the specific product creation details.`);
+             updateCode('summary');
+             resetHighlights();
+             anime({ targets: createdProductEl, opacity: 0, scale: 0, duration: 300}); // Ensure product is hidden
+
+             nextButton.style.display = 'none';
+             nextButton.disabled = true;
+             startButton.disabled = false;
+             startButton.textContent = "Restart";
+             currentStep = 0; // Reset step counter for restart
+             tl = null; // Discard timeline instance
+         }
+
+        // --- Timeline Creation (Only for ANIMATED steps: 4-11) ---
+        function createAnimatedTimeline() {
+            if (tl) {
+                 tl.pause();
+                 tl.seek(0);
+             }
+
+            tl = anime.timeline({
+                easing: 'easeInOutQuad',
+                duration: 800, // Default duration for animated steps
+                autoplay: false, // IMPORTANT: Manual control
+                complete: handleAnimationEnd // Called when the entire timeline finishes
+            });
+
+            // --- Animation Steps (Starting from original Step 4) ---
+
+            // Step 4 (Timeline Step 1): Client chooses CarFactory
+             tl.add({
+                targets: clientEl, // Simple pulse to indicate client action
+                scale: [1, 1.1, 1],
+                duration: 500,
+                 begin: () => {
+                    currentStep = 4; // Update step number for context
+                    resetHighlights();
+                    highlightElement(clientEl);
+                    highlightElement(carFactoryEl, false); // Indicate target
+                    updateExplanation(`
+                        <b>Step 4: Client Chooses a Factory (Car)</b><br/>
+                        The client code decides it needs a <code>Car</code>. It instantiates a <code>CarFactory</code>, typically assigning it to a variable of the abstract <code>VehicleFactory</code> type. Click 'Next Step'.
+                    `);
+                    updateCode('step4_clientCodeCarSetup');
+                },
+                 complete: pauseAnimation
+            });
+
+            // Step 5 (Timeline Step 2): Client calls operation -> Request to CarFactory
+            tl.add({
+                targets: requestEl,
+                left: `${clientEl.offsetLeft + clientEl.offsetWidth / 2 - 7}px`,
+                top: `${clientEl.offsetTop + clientEl.offsetHeight}px`,
+                opacity: [0, 1],
+                scale: [0, 1],
+                translateX: 0, // Reset position explicitly
+                translateY: 0,
+                duration: 200,
+                begin: () => {
+                    currentStep = 5;
+                    resetHighlights();
+                    highlightElement(clientEl);
+                    updateExplanation(`
+                        <b>Step 5: Client Calls Operation (Car)</b><br/>
+                        The client calls an operation like <code>DeliverVehicle()</code> on the factory instance. This triggers the process. Observe the request moving to the chosen factory.
+                    `);
+                    updateCode('step5_clientCodeCarCall');
+                }
+            })
+            .add({
+                targets: requestEl,
+                translateX: [0, carFactoryEl.offsetLeft - clientEl.offsetLeft + carFactoryEl.offsetWidth / 2 - clientEl.offsetWidth / 2],
+                translateY: [0, carFactoryEl.offsetTop - clientEl.offsetTop - clientEl.offsetHeight],
+                duration: 800,
+                easing: 'easeInOutCirc',
+                 begin: () => {
+                     highlightElement(vehicleFactoryEl); // Highlight base class method being called conceptually
+                 },
+                 complete: () => { // Request reaches factory
+                     anime({ // Fade out request quickly after arrival
+                         targets: requestEl,
+                         opacity: 0,
+                         scale: 0,
+                         duration: 200,
+                         easing: 'easeInExpo'
+                     });
+                     resetHighlights();
+                     highlightElement(carFactoryEl); // Factory receives request
+                     updateExplanation(`
+                         <b>Step 5 (Cont.): Factory Method Invoked</b><br/>
+                         Inside <code>DeliverVehicle</code>, the <code>CreateVehicle()</code> method is called. Because the instance is a <code>CarFactory</code>, its *overridden* method is executed. Click 'Next Step'.
+                     `);
+                     pauseAnimation();
+                 }
+             });
+
+             // Step 6 (Timeline Step 3): CarFactory creates Car
+             tl.add({
+                 targets: createdProductEl,
+                 left: `${carFactoryEl.offsetLeft + carFactoryEl.offsetWidth / 2 - 12}px`,
+                 top: `${carFactoryEl.offsetTop + carFactoryEl.offsetHeight + 5}px`,
+                 opacity: [0, 1],
+                 scale: [0, 1],
+                 translateX: 0, // Reset transforms
+                 translateY: 0,
+                 duration: 400,
+                 easing: 'easeOutBounce',
+                 begin: () => {
+                     currentStep = 6;
+                     createdProductEl.className = 'product-object car-instance';
+                     createdProductEl.textContent = 'C';
+                     resetHighlights();
+                     highlightElement(carFactoryEl);
+                     highlightElement(carProductEl);
+                     updateExplanation(`
+                         <b>Step 6: Concrete Factory Creates Product (Car)</b><br/>
+                         <code>CarFactory.CreateVehicle()</code> runs and returns a <code>new Car()</code> instance. Observe the Car object appearing. Click 'Next Step'.
+                     `);
+                     updateCode('step6_factoryCreatesCar');
+                 },
+                 complete: pauseAnimation
+             });
+
+             // Step 7 (Timeline Step 4): Car object returned to Client
+             tl.add({
+                 targets: createdProductEl,
+                 // Move towards bottom-right of client
+                 translateX: [0, clientEl.offsetLeft + clientEl.offsetWidth/2 - (carFactoryEl.offsetLeft + carFactoryEl.offsetWidth / 2)],
+                 translateY: [0, clientEl.offsetTop + clientEl.offsetHeight - (carFactoryEl.offsetTop + carFactoryEl.offsetHeight + 5)],
+                 duration: 1000,
+                 easing: 'easeInOutBack',
+                 begin: () => {
+                     currentStep = 7;
+                     resetHighlights();
+                     highlightElement(clientEl);
+                     highlightElement(ivehicleEl); // Emphasize it's treated as the interface type
+                     updateExplanation(`
+                         <b>Step 7: Product Returned (Car)</b><br/>
+                         The created <code>Car</code> (as an <code>IVehicle</code>) is returned from <code>CreateVehicle</code>, used by <code>DeliverVehicle</code> (e.g., calling <code>Drive()</code>), and the operation completes. The client got its Car without knowing how it was made. Click 'Next Step'.
+                     `);
+                    updateCode('step7_productReturnedCar');
+                 },
+                 complete: () => {
+                     anime({ targets: createdProductEl, opacity: 0, scale: 0, duration: 300, delay: 100 }); // Fade out product after arrival
+                     pauseAnimation();
+                 }
+             });
+
+             // --- Truck Creation Flow ---
+
+             // Step 8 (Timeline Step 5): Client chooses TruckFactory
+             tl.add({
+                targets: clientEl,
+                scale: [1, 1.1, 1],
+                duration: 500,
+                 begin: () => {
+                    currentStep = 8;
+                    resetHighlights();
+                    highlightElement(clientEl);
+                    highlightElement(truckFactoryEl, false);
+                    updateExplanation(`
+                        <b>Step 8: Client Chooses a Factory (Truck)</b><br/>
+                        Now the client needs a <code>Truck</code>. It instantiates a <code>TruckFactory</code> this time. Notice the client code structure remains very similar. Click 'Next Step'.
+                    `);
+                    updateCode('step8_clientCodeTruckSetup');
+                },
+                 complete: pauseAnimation
+            });
+
+            // Step 9 (Timeline Step 6): Client calls operation -> Request to TruckFactory
+            tl.add({
+                targets: requestEl,
+                left: `${clientEl.offsetLeft + clientEl.offsetWidth / 2 - 7}px`,
+                top: `${clientEl.offsetTop + clientEl.offsetHeight}px`,
+                translateX: 0,
+                translateY: 0,
+                opacity: [0, 1],
+                scale: [0, 1],
+                duration: 200,
+                begin: () => {
+                    currentStep = 9;
+                    resetHighlights();
+                    highlightElement(clientEl);
+                    updateExplanation(`
+                        <b>Step 9: Client Calls Operation (Truck)</b><br/>
+                        The client calls <code>DeliverVehicle()</code> again, but this time on the <code>TruckFactory</code> instance.
+                    `);
+                    updateCode('step9_clientCodeTruckCall');
+                }
+            })
+            .add({
+                targets: requestEl,
+                translateX: [0, truckFactoryEl.offsetLeft - clientEl.offsetLeft + truckFactoryEl.offsetWidth / 2 - clientEl.offsetWidth / 2],
+                translateY: [0, truckFactoryEl.offsetTop - clientEl.offsetTop - clientEl.offsetHeight],
+                duration: 800,
+                easing: 'easeInOutCirc',
+                 begin: () => {
+                      highlightElement(vehicleFactoryEl);
+                 },
+                 complete: () => { // Request reaches factory
+                      anime({ // Fade out request quickly
+                         targets: requestEl,
+                         opacity: 0,
+                         scale: 0,
+                         duration: 200,
+                         easing: 'easeInExpo'
+                     });
+                     resetHighlights();
+                     highlightElement(truckFactoryEl);
+                      updateExplanation(`
+                         <b>Step 9 (Cont.): Factory Method Invoked (Truck)</b><br/>
+                         <code>DeliverVehicle</code> calls <code>CreateVehicle()</code>. The <code>TruckFactory</code>'s overridden method is executed. Click 'Next Step'.
+                     `);
+                     pauseAnimation();
+                 }
+             });
+
+             // Step 10 (Timeline Step 7): TruckFactory creates Truck
+             tl.add({
+                 targets: createdProductEl,
+                 left: `${truckFactoryEl.offsetLeft + truckFactoryEl.offsetWidth / 2 - 12}px`,
+                 top: `${truckFactoryEl.offsetTop + truckFactoryEl.offsetHeight + 5}px`,
+                 opacity: [0, 1],
+                 scale: [0, 1],
+                 translateX: 0, // Reset transforms
+                 translateY: 0,
+                 duration: 400,
+                 easing: 'easeOutBounce',
+                 begin: () => {
+                     currentStep = 10;
+                     createdProductEl.className = 'product-object truck-instance';
+                     createdProductEl.textContent = 'T';
+                     resetHighlights();
+                     highlightElement(truckFactoryEl);
+                     highlightElement(truckProductEl);
+                     updateExplanation(`
+                         <b>Step 10: Concrete Factory Creates Product (Truck)</b><br/>
+                         <code>TruckFactory.CreateVehicle()</code> returns a <code>new Truck()</code>. Observe the Truck object appearing. Click 'Next Step'.
+                     `);
+                    updateCode('step10_factoryCreatesTruck');
+                 },
+                 complete: pauseAnimation
+             });
+
+            // Step 11 (Timeline Step 8): Truck object returned to Client (LAST ANIMATED STEP)
+             tl.add({
+                 targets: createdProductEl,
+                 // Move towards bottom-right of client
+                 translateX: [0, clientEl.offsetLeft + clientEl.offsetWidth/2 - (truckFactoryEl.offsetLeft + truckFactoryEl.offsetWidth / 2)],
+                 translateY: [0, clientEl.offsetTop + clientEl.offsetHeight - (truckFactoryEl.offsetTop + truckFactoryEl.offsetHeight + 5)],
+                 duration: 1000,
+                 easing: 'easeInOutBack',
+                 begin: () => {
+                     currentStep = 11;
+                     resetHighlights();
+                     highlightElement(clientEl);
+                     highlightElement(ivehicleEl);
+                     updateExplanation(`
+                         <b>Step 11: Product Returned (Truck)</b><br/>
+                         The <code>Truck</code> (as <code>IVehicle</code>) is returned. The client used the *same* calling method but received a different product type because it used a different factory. This demonstrates the pattern's flexibility.<br/>(End of animated sequence)
+                     `);
+                    updateCode('step11_productReturnedTruck');
+                 },
+                 complete: () => {
+                     // Fade out product, then let the timeline's main complete callback handle the rest
+                      anime({ targets: createdProductEl, opacity: 0, scale: 0, duration: 300, delay: 100 });
+                     // No pauseAnimation() here - the timeline complete callback will fire next
+                 }
+             });
+
+        } // End of createAnimatedTimeline()
+
+        // --- Reset Visuals ---
+        function resetVisuals() {
+            // Stop any existing timeline immediately
+            if (tl) {
+                tl.pause();
+                tl = null; // Discard old timeline
+            }
+            // Reset animated objects immediately
+            anime.set([requestEl, createdProductEl], {
+                opacity: 0,
+                scale: 0,
+                translateX: 0,
+                translateY: 0,
+            });
+            // Reset highlights and element scales
+            resetHighlights();
+            anime.set([clientEl, vehicleFactoryEl, carFactoryEl, truckFactoryEl, ivehicleEl, carProductEl, truckProductEl], {
+                scale: 1
+            });
+             updateCode('initial');
+             updateExplanation('Welcome! This animation demonstrates the Factory Method pattern step-by-step.<br/><br/><b>Goal:</b> Define an interface for creating an object, but let subclasses decide which class to instantiate.<br/><br/>Click "Start" to begin the first step. Use "Next Step" to proceed.');
+             nextButton.style.display = 'none'; // Hide Next button
+             nextButton.disabled = true;
+             startButton.textContent = "Start";
+             startButton.disabled = false; // Enable Start button
+             currentStep = 0; // Reset step counter
+        }
+
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', () => {
+             resetVisuals(); // Reset everything visually first
+
+             // --- Manually Set Up Step 1 Visuals/Text ---
+             currentStep = 1;
+             resetHighlights();
+             highlightElement(ivehicleEl);
+             highlightElement(carProductEl);
+             highlightElement(truckProductEl);
+             updateExplanation(`
+                 <b>Step 1: Define Products</b><br/>
+                 First, define the common interface (<code>IVehicle</code>) for the objects that will be created (Products). Then, create concrete classes (<code>Car</code>, <code>Truck</code>) that implement this interface. Click 'Next Step'.
+             `);
+             updateCode('step1_productInterface');
+             // --- End Manual Step 1 Setup ---
+
+             // --- Configure Buttons for Next Step ---
+             startButton.disabled = true;
+             startButton.textContent = "Running..."; // Indicate it's in progress
+             nextButton.style.display = 'inline-block';
+             nextButton.disabled = false;
+             // Timeline is NOT created or played yet
+        });
+
+        nextButton.addEventListener('click', () => {
+             // Disable button immediately to prevent double clicks
+             nextButton.disabled = true;
+             startButton.disabled = true; // Keep start disabled
+
+             // --- Handle progression based on current step ---
+             switch (currentStep) {
+                 case 1: // Was showing Step 1, now set up Step 2
+                     currentStep = 2;
+                     resetHighlights();
+                     highlightElement(vehicleFactoryEl);
+                     updateExplanation(`
+                         <b>Step 2: Define Abstract Creator</b><br/>
+                         Define the abstract <code>VehicleFactory</code> (Creator) class. It contains the abstract <code>CreateVehicle()</code> method (the Factory Method) and potentially other operations (like <code>DeliverVehicle</code>) that use the product created by the factory method. Click 'Next Step'.
+                     `);
+                     updateCode('step2_creatorClass');
+                     nextButton.disabled = false; // Re-enable for next static step
+                     break;
+
+                 case 2: // Was showing Step 2, now set up Step 3
+                     currentStep = 3;
+                     resetHighlights();
+                     highlightElement(carFactoryEl);
+                     highlightElement(truckFactoryEl);
+                     updateExplanation(`
+                         <b>Step 3: Define Concrete Creators</b><br/>
+                         Subclasses like <code>CarFactory</code> and <code>TruckFactory</code> override <code>CreateVehicle()</code> to return a specific product instance (<code>Car</code> or <code>Truck</code>). Click 'Next Step' to start the animation.
+                     `);
+                     updateCode('step3_concreteCreators');
+                     nextButton.disabled = false; // Re-enable for next static step (which starts animation)
+                     break;
+
+                 case 3: // Was showing Step 3, now START the animated timeline
+                     currentStep = 4; // The timeline will take over step counting internally for its steps
+                     createAnimatedTimeline(); // Create the timeline containing steps 4-11
+                     if (tl) {
+                         tl.play(); // Start the animated sequence
+                         // DO NOT re-enable nextButton here; pauseAnimation will handle it
+                     } else {
+                         console.error("Timeline creation failed.");
+                         // Re-enable buttons in case of error
+                         startButton.disabled = false; startButton.textContent = "Start";
+                         nextButton.style.display = 'none';
+                     }
+                     break;
+
+                 default: // Already in animated sequence (currentStep >= 4)
+                     if (tl) {
+                         tl.play(); // Resume the animation timeline
+                         // DO NOT re-enable nextButton here; pauseAnimation will handle it
+                     } else {
+                         console.error("Timeline not available to resume.");
+                     }
+                     break;
+             }
+        });
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+             resetVisuals(); // Set the initial state when the page loads
+        });
+
+    </script>
+
+</body>
+</html>
